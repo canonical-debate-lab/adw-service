@@ -1,0 +1,6 @@
+filegroup(
+    name = "resources",
+    srcs = glob(["**/**"]),
+    tags = ["automanaged"],
+    visibility = ["//visibility:public"],
+)
