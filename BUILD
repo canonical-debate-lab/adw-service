@@ -4,39 +4,30 @@ kt_jvm_library(
     name = "code",
     srcs = glob(["src/main/kotlin/**/*.kt"]),
     deps = [
-        "@appdeps//:compile",
         ":adw",
+        "@appdeps//:compile",
+        #"//3rdparty/jvm/io/javalin:javalin",
+        "//3rdparty/jvm/com/fasterxml/jackson/module:jackson_module_kotlin",
+        "//3rdparty/jvm/com/fasterxml/jackson/core:jackson_databind",
+        "//3rdparty/jvm/com/fasterxml/jackson/core:jackson_annotations",
+        "//3rdparty/jvm/com/fasterxml/jackson/core:jackson_core",
+        "//3rdparty/jvm/org/jetbrains/kotlin:kotlin_stdlib",
+        "//3rdparty/jvm/org/jetbrains/kotlin:kotlin_reflect",
     ],
 )
 
 java_import(
     name = "adw",
     jars = [
-        "lib/adw.v1.0.jar",
-        "lib/jlt-2.0.0.jar",
+        "lib/adw.feb2015.jar",
     ],
 )
 
 load("@io_bazel_rules_docker//java:image.bzl", "java_image")
-load("@io_bazel_rules_docker//java:java.bzl", _JAVA_DIGESTS = "DIGESTS")
-load("@io_bazel_rules_docker//container:container.bzl", "container_layer", "container_image", "container_pull")
-
-container_layer(
-    name = "config",
-    data_path = "/config",
-)
-
-container_image(
-    name = "base",
-    base = ":java_image_base",
-    layers = [":config"],
-)
 
 java_image(
     name = "image",
     main_class = "com.github.cdl.adw.ServiceKt",
-    resource_strip_prefix = "src/main/webapp",
-    resources = glob(["src/main/webapp/**/*.xml"]),
     runtime_deps = [
         ":code",
     ],

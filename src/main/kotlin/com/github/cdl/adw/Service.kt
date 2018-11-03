@@ -1,32 +1,52 @@
 package com.github.cdl.adw
 
-import spark.Spark.*
 import it.uniroma1.lcl.adw.*
 import it.uniroma1.lcl.adw.ADW
-import it.uniroma1.lcl.adw.LexicalItemType
+import it.uniroma1.lcl.adw.ItemType
 import it.uniroma1.lcl.adw.utils.*
 import it.uniroma1.lcl.adw.comparison.*
+import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.Javalin
+import io.javalin.Context
 
 import java.io.File
 
 
 fun main(args: Array<String>) {
 
-    val path = File(".").getCanonicalPath();
-    println(path)
+    val app = Javalin.create().start(8080)
 
-    val text1 = "We should stop eating meat"
-    val text2 = "Don't buy so much stuff"
-    val srcTextType = LexicalItemType.SURFACE
-    val trgTextType = LexicalItemType.SURFACE
+    app.routes {
+        get("/healthz") { ctx -> ctx.result("{\"status\": \"ok\"}") }
+        path("/argument/adw") {
+            post(ADWHandler::handle)
+        }
+    }
+}
+
+object ADWHandler {
+
+    val srcTextType = ItemType.SURFACE
+    val trgTextType = ItemType.SURFACE
     val disMethod = DisambiguationMethod.ALIGNMENT_BASED
     val measure = WeightedOverlap()
-    val pipeLine = ADW()
-    val similarity = pipeLine.getPairSimilarity(text1, text2,
-                                                disMethod, measure,
-                                                srcTextType, trgTextType)
-    println(similarity)
+    val pipeLine = ADW.getInstance()
 
+    private data class Request(val text1: String = "", val text2: String = "")
+    private data class Response(val value: Double = 0.0)
 
-    get("/healthz") { _, _ -> "{\"status\": \"ok\"}" }
+    fun handle(ctx: Context) {
+        val req = ctx.bodyAsClass(Request::class.java)
+        val v = pipeLine.getPairSimilarity(
+          req.text1, req.text2,
+          disMethod, measure,
+          srcTextType, trgTextType)
+        
+        getResponse(ctx, v)
+    }
+
+    fun getResponse(ctx: Context, v: Double) {
+        ctx.json(Response(v))
+    }
+
 }
